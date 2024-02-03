@@ -11,6 +11,8 @@ class HIDLaserShutter():
         self.vid = vendorId
         self.pid = productId
 
+        logging.info(f'Initializing USB Laser Shutter')
+
         with hid.Device(self.vid, self.pid) as h:
             logging.info(f'Laser Shutter Initilized')
             logging.info(f'Device manufacturer: {h.manufacturer}')

@@ -27,7 +27,7 @@ try:
     # logger file
     log_name = config['log_dir'] + config['site'] + datetime.now().strftime('_%Y%m%d_%H%M%S.log')
     logging.basicConfig(filename=log_name, encoding='utf-8',
-                        format='%(asctime)s %(message)s',  level=logging.DEBUG)
+                        format='%(asctime)s %(message)s',  level=logging.INFO)
 
 
     timeHelper = utilities.time_helper.TimeHelper()
@@ -176,11 +176,12 @@ try:
                 break
             
             currThresholdMoonAngle = skyscanner.get_moon_angle(config['latitude'], config['longitude'], observation['skyScannerLocation'][0], observation['skyScannerLocation'][1])
-            logging.info('The current Moon angle Threshold is: %.2f' % currThresholdMoonAngle)
+            logging.debug('The current moon angle is: %.2f' % currThresholdMoonAngle)
             if (currThresholdMoonAngle <= config['moonThresholdAngle']):
-                logging.info('The moonThreshold angle was too small. The current threshold moon angle is:  %.2f' % currThresholdMoonAngle + 
-                ' the current direction of telescope is az: %.2f ze: %.2f' % (
-                    observation['skyScannerLocation'][0], observation['skyScannerLocation'][1]))   
+                logging.info('The current moon angle is %.2f < the threshold angle of %.2f so skipping this observation (ze: %.2f, az: %.2f, filter: %d)' % (currThresholdMoonAngle, config['moonThresholdAngle'], observation['skyScannerLocation'][0], observation['skyScannerLocation'][1], observation['filterPosition']))
+#                logging.info('The moonThreshold angle was too small. The current threshold moon angle is:  %.2f' % currThresholdMoonAngle + 
+#                ' the current direction of telescope is az: %.2f ze: %.2f' % (
+#                    observation['skyScannerLocation'][0], observation['skyScannerLocation'][1]))   
                 continue
 
             logging.info('Moving SkyScanner to: %.2f, %.2f' % (
@@ -188,7 +189,7 @@ try:
             skyscanner.set_pos_real(
                 observation["skyScannerLocation"][0], observation['skyScannerLocation'][1])
             world_az, world_zeni = skyscanner.get_world_coords()
-            logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %2f" %(world_az, world_zeni))
+            logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
             # Move the filterwheel
             logging.info('Moving FilterWheel to: %d' % (observation['filterPosition']))
@@ -203,8 +204,7 @@ try:
                 observation['exposureTime'] = min(0.5*observation['lastExpTime']*(1 + observation['desiredIntensity']/observation['lastIntensity']),
                                                 config['maxExposureTime'])
 
-            logging.info('Calculated exposure time: ' +
-                        str(observation['exposureTime']))
+            logging.info('Calculated exposure time: {:.1f}'.format(observation['exposureTime']))
 
             # Take image
             new_image = imageTaker.take_normal_image(observation['imageTag'],
@@ -220,7 +220,7 @@ try:
             observation['lastIntensity'] = image_intensity
             observation['lastExpTime'] = observation['exposureTime']
 
-            logging.info('Image intensity: ' + str(image_intensity))
+            logging.info('Image intensity: {:.2f}'.format(image_intensity))
 
             # Check if we should take a laser image
             logging.info('Time since last laser ' +  str(datetime.now() - config['laser_lasttime']))
@@ -264,9 +264,9 @@ except Exception as e:
     powerControl.turnOff(config['LaserPowerPort'])
     powerControl.turnOff(config['FilterWheelPowerPort'])
 
-    sm = SendMail(config['email'], config['pickleCred'], config['gmailCred'], config['site'])
-    
-    print("sending mail")
-    sm.send_error(config['receiverEmails'], e)
+#    sm = SendMail(config['email'], config['pickleCred'], config['gmailCred'], config['site'])
+#    
+#    print("sending mail")
+#    sm.send_error(config['receiverEmails'], e)
 
     

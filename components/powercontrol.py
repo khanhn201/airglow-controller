@@ -1,7 +1,7 @@
 import sys
 import dlipower
 import logging
-
+import time
 
 class PowerControl:
     def __init__(self, hostname="192.168.1.100", userid="admin", password="ionosphere") -> None:
@@ -12,12 +12,36 @@ class PowerControl:
 
     def turnOn(self, port):
         res = self.switch.on(port)
-        logging.info("Powered on port " + str(port) + " response: " + str(res))
-        
+#        if res == False:
+
+        if self.switch.status(port) != 'ON':
+            # The action hasn't completed yet, pause
+            logging.debug("Trying to turn on " + str(port) + " an pausing")
+            time.sleep(1)
+
+        if self.switch.status(port) == 'ON':
+            # dlipower returns False if the operation succeeded
+            logging.info("Powered on port " + str(port))
+        else:
+            logging.error("Cannot power on port " + str(port))
+
     def turnOff(self, port):
         res = self.switch.off(port)
-        logging.info("Powered off port " + str(port) + " response: " + str(res))
-        
+#        if res == False:
+
+        if self.switch.status(port) != 'OFF':
+            # The action hasn't completed yet, pause
+            logging.debug("Trying to turn off " + str(port) + " an pausing")
+            time.sleep(1)
+
+        if self.switch.status(port) == 'OFF':
+            logging.info("Powered off port " + str(port))
+        else:
+            logging.error("Cannot power off port " + str(port))
+
     def cycle(self, port):
         res = self.switch.cycle(port)
-        logging.info("Cycled port " + str(port) + " response: "+ str(res))
+        if res == False:
+            logging.info("Cycled port " + str(port))
+        else:
+            logging.error("Cannot cycle port " + str(port))

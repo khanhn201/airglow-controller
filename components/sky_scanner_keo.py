@@ -37,7 +37,7 @@ class SkyScanner():
             self._openSerial()
             logging.info('Initialized SkyScanner')
         except:
-            print("Can't open serial port")
+            logging.error("Can't open serial port")
 
     def set_pos_azi(self, azi_machine_step):
         strr = 'a=%d ' % azi_machine_step
@@ -57,25 +57,25 @@ class SkyScanner():
         self.ser.write('GOSUB4 '.encode())
         process_az = self.ser.readline().decode()
         azi1, zeni1 = self.get_curr_coords()
-        print("Moving Skyscanner to Azi Machine Step: ", azi, " Zeni Machine Step: ", zeni)
+        logging.debug("Moving Skyscanner to Azi Machine Step: ", azi, " Zeni Machine Step: ", zeni)
         while (azi != azi1 or zeni != zeni1):
             # print(azi, azi1, zeni, zeni1)
-            print("Current Azi Pos:", azi1, " ||||  Target Azi Pos:", azi)
-            print("Current Zeni Pos:", zeni1, " ||||  Target Zeni Pos", zeni)
+            logging.debug("Current Azi Pos:", azi1, " ||||  Target Azi Pos:", azi)
+            logging.debug("Current Zeni Pos:", zeni1, " ||||  Target Zeni Pos", zeni)
 
             azi1, zeni1 = self.get_curr_coords()
             sleep(2)
-            print("\n")
+#            print("\n")
         sleep(3)
-        print("Finished Moving")
+#        print("Finished Moving")
 
     def set_pos_real(self, azi_world, zeni_world):
         # JJM REWRITE
-        logging.info("SkyScanner moving to azi: %.2f, and zeni: %2f" %(azi_world, zeni_world))
-
         azi_ss = np.mod(azi_world+self.azi_offset,360.)
         zeni_ss = zeni_world+self.zeni_offset
-        logging.info("SkyScanner moving to SS coords azi: %.2f and zeni: %.2f" %(azi_ss,zeni_ss))
+
+        logging.info("SkyScanner moving to (az, ze) of world: (%.2f, %.2f), SS: (%.2f, %.2f)" % (azi_world, zeni_world, azi_ss, zeni_ss))
+
         try:
             self.ser.write("S?\r".encode())
             sleep(1)
@@ -83,7 +83,7 @@ class SkyScanner():
             res = self.ser.read_until(b'\r').decode()
             res = res.strip()
             trash = self.ser.readline().decode()
-            print('PRIOR TO MOVE STATUS: [%s]' % res)
+#            print('PRIOR TO MOVE STATUS: [%s]' % res)
             self.ser.write("P(%.2f,%.2f)\r".encode() % (azi_ss, zeni_ss))
 
             moving = True
@@ -94,19 +94,19 @@ class SkyScanner():
                 self.ser.write("S?\r".encode())
                 sleep(1)
                 res = self.ser.readline().decode()
-                print('SET POS [%s]' % res)
+#                print('SET POS [%s]' % res)
                 if ("!P:1" in res):
                     moving = False
                 if count > 20:
                     moving = False
                     SS_error = True
         
-            print("Finished Moving after %d reads" % count, SS_error)
+#            print("Finished Moving after %d reads" % count, SS_error)
 
 #            azi_curr, zeni_curr = self.get_world_coords()
 #            logging.info("SkyScanner current location azi: %.2f, and zeni: %2f" %(azi_curr, zeni_curr))
         except Exception as e:
-            logging.info('Error moving SkyScanner %s', e)
+            logging.error('Error moving SkyScanner %s', e)
 
 
 
@@ -133,7 +133,7 @@ class SkyScanner():
         zeni_machine_step = round((self.max_steps / 360) * zeni)
         azi_machine_step = self.max_steps - (azi_machine_step % self.max_steps)
         zeni_machine_step = zeni_machine_step % self.max_steps
-        print(azi_machine_step, zeni_machine_step)
+#        print(azi_machine_step, zeni_machine_step)
         return azi_machine_step, zeni_machine_step
 
     def convert_sun_to_machine_steps(self, sun_location_azi, sun_location_zeni):
@@ -304,7 +304,7 @@ class SkyScanner():
             res = self.ser.read_until(b'\r').decode()
             res = res.strip()
 
-            print('HOMING: [%s]' % res)
+#            print('HOMING: [%s]' % res)
 
             if "!H:1" in res:
                 moving = False
@@ -312,9 +312,9 @@ class SkyScanner():
                 moving = False
                 SS_error = True
         
-        print("Finished Moving after %d reads" % count, SS_error)
+        logging.debug("Finished Moving after %d reads" % count, SS_error)
         logging.info('Homed Skyscanner')
-        print("Finished Moving SkyScanner to Home Position")
+#        print("Finished Moving SkyScanner to Home Position")
 
     def get_curr_coords(self):
     # JJM REWRITE
@@ -324,7 +324,7 @@ class SkyScanner():
         str = self.ser.read_until(b'\r').decode()
         trash = self.ser.readline().decode()
 #        str = self.ser.readline().decode()
-        print("GCC S?: %s" % str)
+#        print("GCC S?: %s" % str)
 
         count = 0
         reading = True
@@ -337,20 +337,20 @@ class SkyScanner():
 #        str = self.ser.readline().decode()
             str = self.ser.read_until(b'\r').decode()
             trash = self.ser.readline().decode()
-            print('GCC %d: %s' % (count, str))
+#            print('GCC %d: %s' % (count, str))
 
             if "," in str:
                 reading = False
 
         # Read the serial line
-        print('GCC DONE: %s' % str)
+#        print('GCC DONE: %s' % str)
         pos = str.split(',')
-        logging.info('SS: get_curr_pos: %s', str)
+        logging.debug('SS: get_curr_pos: %s', str)
         try:
             az=float(pos[0])
             ze=float(pos[1])
         except:
-            logging.info('ERROR GETTING COORDS FROM SS')
+            logging.error('ERROR GETTING COORDS FROM SS')
             az = None
             ze = None
             raise Exception("Error getting coordinates from SkyScanner")

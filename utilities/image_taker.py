@@ -20,7 +20,11 @@ class Image_Helper:
             "XR": 0,
             "D": 0,
             "L": 0,
-            "B": 0
+            "B": 0,
+            "X0": 0,
+            "X1": 0,
+            "X2": 0,
+            "X3": 0
         }
         self.folderName = folderName
         self.camera = camera
