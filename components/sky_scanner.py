@@ -58,6 +58,7 @@ class SkyScanner():
         process_az = self.ser.readline().decode()
         azi1, zeni1 = self.get_curr_coords()
         print("Moving Skyscanner to Azi Machine Step: ", azi, " Zeni Machine Step: ", zeni)
+        count = 0
         while (azi != azi1 or zeni != zeni1):
             # print(azi, azi1, zeni, zeni1)
             print("Current Azi Pos:", azi1, " ||||  Target Azi Pos:", azi)
@@ -66,6 +67,16 @@ class SkyScanner():
             azi1, zeni1 = self.get_curr_coords()
             sleep(2)
             print("\n")
+
+            count = count+1
+            if count > 10:
+                print('resending commands')
+                count = 0
+                self.ser.write(('a=%d ' % azi).encode())
+                self.ser.write(('z=%d ' % zeni).encode())
+                self.ser.write('GOSUB4 '.encode())
+                process_az = self.ser.readline().decode()
+
         sleep(3)
         print("Finished Moving")
 
@@ -79,16 +90,28 @@ class SkyScanner():
         self.ser.write(('GOSUB4 ').encode())
         process_az = self.ser.readline().decode()
         azi1, zeni1 = self.get_curr_coords()
+        count = 0
         while (azi != azi1 or zeni != zeni1):
-            print(azi, azi1, zeni, zeni1)
+            print('set_pos_real while loop (goal, actual) az = (%.2f %.2f), ze = (%.2f %.2f)' % (azi, azi1, zeni, zeni1))
             azi1, zeni1 = self.get_curr_coords()
             sleep(2)
-            print("Waiting")
+            print("Waiting ", count)
             
+            count = count+1
+            if count > 10:
+                print('resending commands')
+                logging.info('SkyScanner had to resend commands')
+                count = 0
+                self.ser.write(('a=%d ' % azi).encode())
+                self.ser.write(('z=%d ' % zeni).encode())
+                self.ser.write('GOSUB4 '.encode())
+                process_az = self.ser.readline().decode()
+
+
         azi1, zeni1 = self.get_curr_coords()
         azi_curr, zeni_curr = self.get_world_coords()
-        logging.info("SkyScanner current location azi: %.2f, and zeni: %2f" %(azi_curr, zeni_curr))
-        logging.info("SkyScanner current machine step azi: %.2f, and zeni: %2f" %(azi1, zeni1))
+        logging.info("SkyScanner current location azi: %.2f, and zeni: %.2f" %(azi_curr, zeni_curr))
+        logging.info("SkyScanner current machine step azi: %.2f, and zeni: %.2f" %(azi1, zeni1))
         print("Finished Moving")
 
 
@@ -297,10 +320,10 @@ class SkyScanner():
         '''Gets target position of SmartMotor'''
         self.ser.write('RPA '.encode())
         process_az = self.ser.readline().decode()
-        print(process_az)
+        print('\nget_curr_coords process_az ', process_az)
         split_by_command_numbers = process_az.split(' ')
         split_by_hash = split_by_command_numbers[1].split('\r')
-        print(split_by_hash)
+        print('get_curr_coords split_by_hash (az, az) ', split_by_hash)
         ze = int(split_by_hash[0])
         az = int(split_by_hash[1])
         return az, ze
