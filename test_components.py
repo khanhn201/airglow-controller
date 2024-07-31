@@ -46,7 +46,11 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 #	Sun
 #	Sequence
 # 	gmail
-what_to_test = ['LaserShutter']
+
+#what_to_test = ['LaserShutter']
+#what_to_test = ['SkyAlert']
+what_to_test = ['Sequence']
+
 
 powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
 
@@ -123,6 +127,7 @@ if 'Sequence' in what_to_test:
     fw = FilterWheel(ip_address=filterwheel_config['ip_address'])
 #    fw = FilterWheel(filterwheel_config['port_location'])
     skyscanner = SkyScanner(skyscan_config['max_steps'], skyscan_config['azi_offset'], skyscan_config['zeni_offset'], skyscan_config['azi_world'], skyscan_config['zeni_world'], skyscan_config['number_of_steps'], skyscan_config['port_location'])
+    fw.home()
 
     logging.info('Sending SkyScanner home')
     skyscanner.go_home()
