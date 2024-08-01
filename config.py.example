@@ -78,7 +78,8 @@ skyscan_config = {
     'azi_world': 45,
     'zeni_world': 45,
     'number_of_steps': 50,
-    'port_location': '/dev/ttyUSB1'
+    'port_location': '/dev/ttyUSB1',
+    'type': 'KEO'
 }
 
 filterwheel_config = {

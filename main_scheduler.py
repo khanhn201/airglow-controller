@@ -18,7 +18,12 @@ from utilities.get_IP import get_IP_from_MAC
 
 from components.camera import getCamera
 from components.shutterhid import HIDLaserShutter
-from components.sky_scanner_keo import SkyScanner
+
+if skyscan_config['type'] == 'KEO':
+    from components.sky_scanner_keo import SkyScanner
+else:
+    from components.sky_scanner import SkyScanner
+
 from components.skyalert import SkyAlert
 from components.powercontrol import PowerControl
 from components.filterwheel import FilterWheel
@@ -46,7 +51,8 @@ try:
     powerControl.turnOn(config['LaserPowerPort'])
 
     # Filter wheel power (was a sequence before to reboot the Pi, but took that out
-    powerControl.turnOn(config['FilterWheelPowerPort'])
+    if filterwheel_config['port_location'] != None:
+        powerControl.turnOn(config['FilterWheelPowerPort'])
 
     # Cycle the Cloud sensor power
     powerControl.turnOff(config['CloudSensorPowerPort'])
@@ -103,7 +109,7 @@ try:
     lasershutter = HIDLaserShutter(config['vendorId'], config['productId'])
     skyscanner = SkyScanner(skyscan_config['max_steps'], skyscan_config['azi_offset'], skyscan_config['zeni_offset'], skyscan_config['azi_world'], skyscan_config['zeni_world'], skyscan_config['number_of_steps'], skyscan_config['port_location'])
     camera = getCamera("Andor")
-    if filterwheel_serial:
+    if (filterwheel_serial) & (filterwheel_config['port_location'] != None):
         # Use the serial port
         logging.info('Opening Filterwheel serial port')
         fw = FilterWheel(port=filterwheel_config['port_location'])
@@ -262,7 +268,8 @@ except Exception as e:
     powerControl.turnOff(config['AndorPowerPort'])
     powerControl.turnOff(config['SkyScannerPowerPort'])
     powerControl.turnOff(config['LaserPowerPort'])
-    powerControl.turnOff(config['FilterWheelPowerPort'])
+    if filterwheel_config['port_location'] != None:
+        powerControl.turnOff(config['FilterWheelPowerPort'])
 
 #    sm = SendMail(config['email'], config['pickleCred'], config['gmailCred'], config['site'])
 #    
