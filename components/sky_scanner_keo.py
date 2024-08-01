@@ -312,7 +312,7 @@ class SkyScanner():
                 moving = False
                 SS_error = True
         
-        logging.debug("Finished Moving after %d reads" % count, SS_error)
+        logging.debug("Finished Moving after %d reads, SS_error: %s", count, SS_error)
         logging.info('Homed Skyscanner')
 #        print("Finished Moving SkyScanner to Home Position")
 
