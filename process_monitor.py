@@ -3,6 +3,7 @@ import subprocess
 from datetime import datetime
 from sshtunnel import SSHTunnelForwarder
 import MySQLdb as mdb
+from config import config
 
 # Define the processes to monitor with their time windows
 # Dictionary with "process name": ("start time", "stop time")
@@ -11,7 +12,7 @@ processes_to_monitor = {
     "skyalert-logger.py": None
 }
 
-site_id = 'low'
+site_id = config['site'].lower()
 
 def update_database(process_cmd, status, site_id):
     with SSHTunnelForwarder(
