@@ -11,6 +11,9 @@ class PowerControl:
         logging.info("Connected to power switch")
 
     def turnOn(self, port):
+        if port == None:
+            return
+
         res = self.switch.on(port)
 #        if res == False:
 
@@ -26,6 +29,9 @@ class PowerControl:
             logging.error("Cannot power on port " + str(port))
 
     def turnOff(self, port):
+        if port == None:
+            return
+
         res = self.switch.off(port)
 #        if res == False:
 
@@ -40,6 +46,9 @@ class PowerControl:
             logging.error("Cannot power off port " + str(port))
 
     def cycle(self, port):
+        if port == None:
+            return
+
         res = self.switch.cycle(port)
         if res == False:
             logging.info("Cycled port " + str(port))
