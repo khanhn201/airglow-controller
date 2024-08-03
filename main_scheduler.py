@@ -51,8 +51,7 @@ try:
     powerControl.turnOn(config['LaserPowerPort'])
 
     # Filter wheel power (was a sequence before to reboot the Pi, but took that out
-    if filterwheel_config['port_location'] != None:
-        powerControl.turnOn(config['FilterWheelPowerPort'])
+    powerControl.turnOn(config['FilterWheelPowerPort'])
 
     # Cycle the Cloud sensor power
     powerControl.turnOff(config['CloudSensorPowerPort'])
@@ -268,8 +267,7 @@ except Exception as e:
     powerControl.turnOff(config['AndorPowerPort'])
     powerControl.turnOff(config['SkyScannerPowerPort'])
     powerControl.turnOff(config['LaserPowerPort'])
-    if filterwheel_config['port_location'] != None:
-        powerControl.turnOff(config['FilterWheelPowerPort'])
+    powerControl.turnOff(config['FilterWheelPowerPort'])
 
 #    sm = SendMail(config['email'], config['pickleCred'], config['gmailCred'], config['site'])
 #    
