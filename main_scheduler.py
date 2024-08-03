@@ -63,41 +63,56 @@ try:
         config['skyAlertAddress'] = 'http://' + SkyAlert_IP + ':81'
         logging.info('Found SkyAlert at %s' % SkyAlert_IP)
     else:
-        logging.info('Could not find SkyAlert after power cycle')
+        wait_count = 0
+        found = False
+        while wait_count < 5 and found == False:
+            wait_count = wait_count+1
+            sleep(15)
+            SkyAlert_IP = get_IP_from_MAC(config['skyAlertMAC'])
+            if SkyAlert_IP is not None:
+                config['skyAlertAddress'] = 'http://' + SkyAlert_IP + ':81'
+                logging.info('Found SkyAlert at %s' % SkyAlert_IP)
+                found = True
+        
+        if SkyAlert_IP is None:
+            logging.info('Could not find SkyAlert after power cycle')
 
-    # Make sure we can find the filterwheel
-    filterwheel_serial = False
-    filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
-    if filterwheel_IP is not None:
-        filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080/'
+    # Make sure we can find the filterwheel if needed
+    if filterwheel_config['port_location'] != None:
         filterwheel_serial = False
-        logging.info('Found FilterWheel at %s' % filterwheel_IP)
-    else:
-        logging.info('Could not find the IP address for the filterwheel. Rebooting.')
-        powerControl.turnOff(config['FilterWheelControlPowerPort'])
-        sleep(5)
-        powerControl.turnOn(config['FilterWheelControlPowerPort'])
-        sleep(60)
         filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
         if filterwheel_IP is not None:
-            filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
+            filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080/'
             filterwheel_serial = False
             logging.info('Found FilterWheel at %s' % filterwheel_IP)
         else:
-            logging.info('Still cannot find IP address fo the filterwheel. Waiting...')
-            wait_count = 0
-            found = False
-            while wait_count < 5 and found == False:
-                wait_count = wait_count+1
-                sleep(15)
-                filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
-                if filterwheel_IP is not None:
-                    filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
-                    filterwheel_serial = False
-                    found = True
-                    logging.info('Found Filterwheel at %s' % filterwheel_IP)
-                else:
-                    filterwheel_serial = True
+            logging.info('Could not find the IP address for the filterwheel. Rebooting.')
+            powerControl.turnOff(config['FilterWheelControlPowerPort'])
+            sleep(5)
+            powerControl.turnOn(config['FilterWheelControlPowerPort'])
+            sleep(60)
+            filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
+            if filterwheel_IP is not None:
+                filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
+                filterwheel_serial = False
+                logging.info('Found FilterWheel at %s' % filterwheel_IP)
+            else:
+                logging.info('Still cannot find IP address fo the filterwheel. Waiting...')
+                wait_count = 0
+                found = False
+                while wait_count < 5 and found == False:
+                    wait_count = wait_count+1
+                    sleep(15)
+                    filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
+                    if filterwheel_IP is not None:
+                        filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
+                        filterwheel_serial = False
+                        found = True
+                        logging.info('Found Filterwheel at %s' % filterwheel_IP)
+                    else:
+                        filterwheel_serial = True
+    else:
+        logging.info('No filterwheel in use')
 
     logging.info('Waiting until Housekeeping time: ' +
                 str(timeHelper.getHousekeeping()))
