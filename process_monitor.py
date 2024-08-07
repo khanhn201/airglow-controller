@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 from sshtunnel import SSHTunnelForwarder
 import MySQLdb as mdb
 from config import config
+import utilities.time_helper
+import os
 
 # Define the processes to monitor with their time windows
 # Dictionary with "process name": ("start time", "stop time")
 processes_to_monitor = {
-    "main_scheduler.py": ("16:00", "06:00"),
-    "skyalert-logger.py": None
+    "main_scheduler.py": ("16:00", "06:00", "/usr/bin/python3 /home/airglow/airglow/airglow-controller/main_scheduler.py", "/home/airglow/cron_log.txt"),
+    "skyalert-logger.py": (None, None, "/usr/bin/python3 /home/airglow/airglow/skyalert-logger/skyalert-logger.py", "/home/airglow/skyalert_log.txt")
 }
 
 site_id = config['site'].lower()
@@ -69,10 +71,43 @@ def is_process_running(process_cmd):
     except subprocess.CalledProcessError:
         return False
 
+# Function to start a process in the background.
+def start_process(command, log_file):
+    """
+    Start a process with the given command in the background.
+
+    Args:
+        command (str): The command to start the process.
+        log_file (str): The file to redirect stdout and stderr.
+
+    Returns:
+        None
+    """
+    try:
+        with open(log_file, 'a') as log:
+            # Start the process in the background, redirecting stdout and stderr
+            subprocess.Popen(command, stdout=log, stderr=log, shell=True, preexec_fn=os.setpgrp)
+        print(f"Started process: {command}")
+    except Exception as e:
+        # Log or print any exceptions that occur while starting the process
+        print(f"Failed to start process: {e}")
+
 # Main script logic
-for process_cmd, time_window in processes_to_monitor.items():
+for process_cmd, (start_time, stop_time, full_process_cmd, log_file) in processes_to_monitor.items():
     # Check if the process is within its specified time window
-    if time_window is None or is_within_time_window(*time_window):
+    if start_time is None or is_within_time_window(start_time, stop_time):
         status = 1 if is_process_running(process_cmd) else 0
         print(process_cmd, status)
         update_database(process_cmd, status, site_id)
+
+        if status == 0:
+            # Try to restart the process
+            if process_cmd == 'main_scheduler.py':
+                # Check if we are before the sunrise time
+                timeHelper = utilities.time_helper.TimeHelper()
+                sunrise = timeHelper.getSunrise()
+                if datetime.now() > sunrise:
+                    # We are after sunrise, so no need to do anything
+                    continue
+
+            start_process(full_process_cmd, log_file)
