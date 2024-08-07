@@ -78,8 +78,9 @@ try:
             logging.info('Could not find SkyAlert after power cycle')
 
     # Make sure we can find the filterwheel if needed
+    filterwheel_serial = False
     if filterwheel_config['port_location'] != None:
-        filterwheel_serial = False
+#        filterwheel_serial = False
         filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
         if filterwheel_IP is not None:
             filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080/'
