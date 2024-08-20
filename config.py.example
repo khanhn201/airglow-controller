@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 config = {
     'site': 'LOW',
@@ -19,6 +20,7 @@ config = {
     'zen_laser': -180.0,
     'data_dir': '/home/airglow/airglow/data/',
     'log_dir': '/home/airglow/airglow/logfiles/',
+    'log_type': logging.INFO,
     'laser_timedelta': timedelta(minutes=15),
     'laser_lasttime': None,
     'maxExposureTime': 600,

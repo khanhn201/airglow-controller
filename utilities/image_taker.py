@@ -112,10 +112,10 @@ class Image_Helper:
 
     # function for laser image
 
-    def take_laser_image(self, exposure, skyscanner, lasershutter, az, zen, fw, fw_laser):
-        skyscanner.set_pos_real(az, zen)
+    def take_laser_image(self, exposure, skyscanner, lasershutter, az, ze, fw, fw_laser):
+#        skyscanner.set_pos_real(az, ze)
         # move filterwheel
-        fw.go(fw_laser)
+#        fw.go(fw_laser)
         lasershutter.open_shutter()
         self.camera.setShutter()
         self.camera.setExposureTime(exposure)

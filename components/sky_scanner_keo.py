@@ -323,29 +323,27 @@ class SkyScanner():
         sleep(1)
         str = self.ser.read_until(b'\r').decode()
         trash = self.ser.readline().decode()
-#        str = self.ser.readline().decode()
-#        print("GCC S?: %s" % str)
+
+        logging.debug('SS: response to S?: %s', str)
 
         count = 0
         reading = True
 
         while (reading == True) and (count < 20):
             count = count+1 
+
             # Flush the serial line out
             self.ser.write("P?\r".encode())
             sleep(1)
-#        str = self.ser.readline().decode()
             str = self.ser.read_until(b'\r').decode()
             trash = self.ser.readline().decode()
-#            print('GCC %d: %s' % (count, str))
 
             if "," in str:
                 reading = False
 
         # Read the serial line
-#        print('GCC DONE: %s' % str)
         pos = str.split(',')
-        logging.debug('SS: get_curr_pos: %s', str)
+        logging.debug('SS: get_curr_pos: %s; count: %d', str, count)
         try:
             az=float(pos[0])
             ze=float(pos[1])
@@ -354,6 +352,7 @@ class SkyScanner():
             az = None
             ze = None
             raise Exception("Error getting coordinates from SkyScanner")
+
         # These are in SS coordinates
         return az, ze
 

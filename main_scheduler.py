@@ -32,7 +32,7 @@ try:
     # logger file
     log_name = config['log_dir'] + config['site'] + datetime.now().strftime('_%Y%m%d_%H%M%S.log')
     logging.basicConfig(filename=log_name, encoding='utf-8',
-                        format='%(asctime)s %(message)s',  level=logging.INFO)
+                        format='%(asctime)s %(message)s',  level=config['log_type'])
 
 
     timeHelper = utilities.time_helper.TimeHelper()
@@ -179,6 +179,20 @@ try:
     if datetime.now() < (sunset + timedelta(minutes=10)):
         bias_image = imageTaker.take_bias_image(config["bias_expose"], 0, 0)
         dark_image = imageTaker.take_dark_image(config["dark_expose"], 0, 0)
+
+        # Move sky scanner and filterwheel
+        logging.info('Moving SkyScanner to laser position: %.2f, %.2f' % (
+            config['azi_laser'], config['zen_laser']))
+        skyscanner.set_pos_real(config['azi_laser'], config['zen_laser'])
+        world_az, world_zeni = skyscanner.get_world_coords()
+        logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
+
+        # Move the filterwheel
+        logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
+        fw.go(filterwheel_config['laser_position'])
+        logging.info("Moved FilterWheel")
+
+        logging.info('Taking laser image')
         laser_image = imageTaker.take_laser_image(
             config["laser_expose"], skyscanner, lasershutter, config["azi_laser"], config["zen_laser"], fw, filterwheel_config["laser_position"])
         if config['laser_timedelta'] is not None:
@@ -248,8 +262,19 @@ try:
             take_laser = (datetime.now() - config['laser_lasttime']) > config['laser_timedelta']
             logging.info('Take_laser is ' + str(take_laser))
             if take_laser:
+#                world_az, world_zeni = skyscanner.get_world_coords()
+#                logging.info("The Sky Scanner is pointed at laser position of azi: %.2f and zeni %.2f" %(world_az, world_zeni))
+                logging.info('Moving SkyScanner to laser position: %.2f, %.2f' % (
+                    config['azi_laser'], config['zen_laser']))
+                skyscanner.set_pos_real(config['azi_laser'], config['zen_laser'])
                 world_az, world_zeni = skyscanner.get_world_coords()
-                logging.info("The Sky Scanner is pointed at laser position of azi: %.2f and zeni %.2f" %(world_az, world_zeni))
+                logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
+
+                # Move the filterwheel
+                logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
+                fw.go(filterwheel_config['laser_position'])
+                logging.info("Moved FilterWheel")
+
                 logging.info('Taking laser image')
                 laser_image = imageTaker.take_laser_image(
                     config["laser_expose"], skyscanner, lasershutter, config["azi_laser"], config["zen_laser"], fw, filterwheel_config["laser_position"])
