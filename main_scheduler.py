@@ -188,9 +188,10 @@ try:
         logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
         # Move the filterwheel
-        logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
-        fw.go(filterwheel_config['laser_position'])
-        logging.info("Moved FilterWheel")
+        if isinstance(filterwheel_config['laser_position'], int):
+            logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
+            fw.go(filterwheel_config['laser_position'])
+            logging.info("Moved FilterWheel")
 
         logging.info('Taking laser image')
         laser_image = imageTaker.take_laser_image(
@@ -271,9 +272,10 @@ try:
                 logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
                 # Move the filterwheel
-                logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
-                fw.go(filterwheel_config['laser_position'])
-                logging.info("Moved FilterWheel")
+                if isinstance(filterwheel_config['laser_position'], int):
+                    logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
+                    fw.go(filterwheel_config['laser_position'])
+                    logging.info("Moved FilterWheel")
 
                 logging.info('Taking laser image')
                 laser_image = imageTaker.take_laser_image(
