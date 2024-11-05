@@ -37,7 +37,7 @@ class SkyScanner():
             self._openSerial()
             logging.info('Initialized SkyScanner')
         except:
-            print("Can't open serial port")
+            logging.info("Can't open serial port")
 
     def set_pos_azi(self, azi_machine_step):
         strr = 'a=%d ' % azi_machine_step
@@ -57,20 +57,20 @@ class SkyScanner():
         self.ser.write('GOSUB4 '.encode())
         process_az = self.ser.readline().decode()
         azi1, zeni1 = self.get_curr_coords()
-        print("Moving Skyscanner to Azi Machine Step: ", azi, " Zeni Machine Step: ", zeni)
+        logging.info("Moving Skyscanner to Azi Machine Step: ", azi, " Zeni Machine Step: ", zeni)
         count = 0
         while (azi != azi1 or zeni != zeni1):
             # print(azi, azi1, zeni, zeni1)
-            print("Current Azi Pos:", azi1, " ||||  Target Azi Pos:", azi)
-            print("Current Zeni Pos:", zeni1, " ||||  Target Zeni Pos", zeni)
+            logging.debug("Current Azi Pos:", azi1, " ||||  Target Azi Pos:", azi)
+            logging.debug("Current Zeni Pos:", zeni1, " ||||  Target Zeni Pos", zeni)
 
             azi1, zeni1 = self.get_curr_coords()
             sleep(2)
-            print("\n")
+            #print("\n")
 
             count = count+1
             if count > 10:
-                print('resending commands')
+                #print('resending commands')
                 count = 0
                 self.ser.write(('a=%d ' % azi).encode())
                 self.ser.write(('z=%d ' % zeni).encode())
@@ -78,13 +78,13 @@ class SkyScanner():
                 process_az = self.ser.readline().decode()
 
         sleep(3)
-        print("Finished Moving")
+        #print("Finished Moving")
 
     def set_pos_real(self, azi_world, zeni_world):
         azi, zeni = self.convert_to_machine_steps(azi_world, zeni_world)
-        print("THIS is where I am moving", azi, zeni)
-        logging.info("SkyScanner moving to azi: %.2f, and zeni: %2f" %(azi_world, zeni_world))
-        logging.info("SkyScanner moving to machine step azi: %.2f, and zeni: %2f" %(azi, zeni))
+        #print("THIS is where I am moving", azi, zeni)
+        logging.info("SkyScanner moving to azi: %.2f, and zeni: %.2f" %(azi_world, zeni_world))
+        logging.info("SkyScanner moving to machine step azi: %.2f, and zeni: %.2f" %(azi, zeni))
         self.ser.write(('a=%d ' % azi).encode())
         self.ser.write(('z=%d ' % zeni).encode())
         self.ser.write(('GOSUB4 ').encode())
@@ -92,10 +92,10 @@ class SkyScanner():
         azi1, zeni1 = self.get_curr_coords()
         count = 0
         while (azi != azi1 or zeni != zeni1):
-            print('set_pos_real while loop (goal, actual) az = (%.2f %.2f), ze = (%.2f %.2f)' % (azi, azi1, zeni, zeni1))
+            logging.debug('set_pos_real while loop (goal, actual) az = (%.2f %.2f), ze = (%.2f %.2f)' % (azi, azi1, zeni, zeni1))
             azi1, zeni1 = self.get_curr_coords()
             sleep(2)
-            print("Waiting ", count)
+            #print("Waiting ", count)
             
             count = count+1
             if count > 10:
@@ -112,7 +112,7 @@ class SkyScanner():
         azi_curr, zeni_curr = self.get_world_coords()
         logging.info("SkyScanner current location azi: %.2f, and zeni: %.2f" %(azi_curr, zeni_curr))
         logging.info("SkyScanner current machine step azi: %.2f, and zeni: %.2f" %(azi1, zeni1))
-        print("Finished Moving")
+        #print("Finished Moving")
 
 
 
@@ -320,17 +320,17 @@ class SkyScanner():
         '''Gets target position of SmartMotor'''
         self.ser.write('RPA '.encode())
         process_az = self.ser.readline().decode()
-        print('\nget_curr_coords process_az ', process_az)
+        #print('\nget_curr_coords process_az ', process_az)
         split_by_command_numbers = process_az.split(' ')
         split_by_hash = split_by_command_numbers[1].split('\r')
-        print('get_curr_coords split_by_hash (az, az) ', split_by_hash)
+        #print('get_curr_coords split_by_hash (az, az) ', split_by_hash)
         ze = int(split_by_hash[0])
         az = int(split_by_hash[1])
         return az, ze
 
     def _openSerial(self):
         '''opens serial port and sets handle'''
-        self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=9600,
+        self.ser = serial.Serial(port=self.port_location, baudrate=9600,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
                                  bytesize=serial.EIGHTBITS, timeout=1)
 
