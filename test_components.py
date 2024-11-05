@@ -19,10 +19,16 @@ from utilities.send_mail import SendMail
 from components.camera import getCamera
 from components.shutterhid import HIDLaserShutter
 #from components.sky_scanner import SkyScanner
-from components.sky_scanner_keo import SkyScanner
+#from components.sky_scanner_keo import SkyScanner
 from components.skyalert import SkyAlert
 from components.powercontrol import PowerControl
 from components.filterwheel import FilterWheel
+
+if skyscan_config['type'] == 'KEO':
+    from components.sky_scanner_keo import SkyScanner
+else:
+    from components.sky_scanner import SkyScanner
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -50,7 +56,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 #what_to_test = ['LaserShutter']
 #what_to_test = ['SkyAlert']
 what_to_test = ['Sequence']
-
+#what_to_test = ['SkyScanner']
 
 powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
 
@@ -80,7 +86,12 @@ if 'LaserShutter' in what_to_test:
     sleep(5)
     lasershutter.close_shutter()
     sleep(5)
+    lasershutter.open_shutter()
+    sleep(5)
+    lasershutter.close_shutter()
     logging.info('Finished testing LaserShutter')
+
+
 
 if 'FilterWheel' in what_to_test:
     powerControl.turnOn(config['FilterWheelPowerPort'])
