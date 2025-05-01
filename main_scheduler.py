@@ -45,7 +45,7 @@ try:
     timeHelper.waitUntilHousekeeping(deltaMinutes=-30)
 
     # Turn on power
-    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=True)
+    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=config['powerSwitchLegacy'])
     powerControl.turnOn(config['AndorPowerPort'])
     powerControl.turnOn(config['SkyScannerPowerPort'])
     powerControl.turnOn(config['LaserPowerPort'])
@@ -139,7 +139,7 @@ try:
         fw.go(filterwheel_config['park_position'])
         camera.turnOffCooler()
         camera.shutDown()
-        powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'], legacy_controller=True)
+        powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'], legacy_controller=config['powerSwitchLegacy'])
         powerControl.turnOff(config['AndorPowerPort'])
         powerControl.turnOff(config['SkyScannerPowerPort'])
         powerControl.turnOff(config['LaserPowerPort'])
@@ -294,7 +294,7 @@ try:
     logging.info('Shutting down CCD')
     camera.shutDown()
 
-    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=True)
+    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=config['powerSwitchLegacy'])
     powerControl.turnOff(config['AndorPowerPort'])
     powerControl.turnOff(config['SkyScannerPowerPort'])
     powerControl.turnOff(config['LaserPowerPort'])
@@ -306,7 +306,7 @@ except Exception as e:
     logging.error(e)
 
     logging.error('Turning off components')
-    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=True)
+    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=config['powerSwitchLegacy'])
     powerControl.turnOff(config['AndorPowerPort'])
     powerControl.turnOff(config['SkyScannerPowerPort'])
     powerControl.turnOff(config['LaserPowerPort'])
