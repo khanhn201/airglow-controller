@@ -60,7 +60,7 @@ config = {
     'vendorId': 0x0461,
     'productId': 0x0030,
 
-    # Gmaii
+    # Gmail
     'pickleCred': "/home/airglow/airglow/airglow-controller/token.pickle",
     'gmailCred': "/home/airglow/airglow/airglow-controller/gmailcredential.json",
     'email': "airglowuaotest@gmail.com",
@@ -81,7 +81,7 @@ skyscan_config = {
     'azi_world': 45,
     'zeni_world': 45,
     'number_of_steps': 50,
-    'port_location': '/dev/ttyUSB1',
+    'port_location': '/dev/ttyUSB0',
     'type': 'KEO'
 }
 

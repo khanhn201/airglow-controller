@@ -300,7 +300,7 @@ try:
     powerControl.turnOff(config['LaserPowerPort'])
     powerControl.turnOff(config['FilterWheelPowerPort'])
 
-    logging.info('Executed flawlessly, exitting')
+    logging.info('Executed flawlessly, exiting')
 
 except Exception as e:
     logging.error(e)
