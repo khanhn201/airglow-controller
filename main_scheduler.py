@@ -18,7 +18,12 @@ from utilities.get_IP import get_IP_from_MAC
 
 from components.camera import getCamera
 from components.shutterhid import HIDLaserShutter
-from components.sky_scanner_keo import SkyScanner
+
+if skyscan_config['type'] == 'KEO':
+    from components.sky_scanner_keo import SkyScanner
+else:
+    from components.sky_scanner import SkyScanner
+
 from components.skyalert import SkyAlert
 from components.powercontrol import PowerControl
 from components.filterwheel import FilterWheel
@@ -27,7 +32,7 @@ try:
     # logger file
     log_name = config['log_dir'] + config['site'] + datetime.now().strftime('_%Y%m%d_%H%M%S.log')
     logging.basicConfig(filename=log_name, encoding='utf-8',
-                        format='%(asctime)s %(message)s',  level=logging.DEBUG)
+                        format='%(asctime)s %(message)s',  level=config['log_type'])
 
 
     timeHelper = utilities.time_helper.TimeHelper()
@@ -40,7 +45,7 @@ try:
     timeHelper.waitUntilHousekeeping(deltaMinutes=-30)
 
     # Turn on power
-    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
+    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=config['powerSwitchLegacy'])
     powerControl.turnOn(config['AndorPowerPort'])
     powerControl.turnOn(config['SkyScannerPowerPort'])
     powerControl.turnOn(config['LaserPowerPort'])
@@ -58,41 +63,57 @@ try:
         config['skyAlertAddress'] = 'http://' + SkyAlert_IP + ':81'
         logging.info('Found SkyAlert at %s' % SkyAlert_IP)
     else:
-        logging.info('Could not find SkyAlert after power cycle')
+        wait_count = 0
+        found = False
+        while wait_count < 5 and found == False:
+            wait_count = wait_count+1
+            sleep(15)
+            SkyAlert_IP = get_IP_from_MAC(config['skyAlertMAC'])
+            if SkyAlert_IP is not None:
+                config['skyAlertAddress'] = 'http://' + SkyAlert_IP + ':81'
+                logging.info('Found SkyAlert at %s' % SkyAlert_IP)
+                found = True
+        
+        if SkyAlert_IP is None:
+            logging.info('Could not find SkyAlert after power cycle')
 
-    # Make sure we can find the filterwheel
+    # Make sure we can find the filterwheel if needed
     filterwheel_serial = False
-    filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
-    if filterwheel_IP is not None:
-        filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080/'
-        filterwheel_serial = False
-        logging.info('Found FilterWheel at %s' % filterwheel_IP)
-    else:
-        logging.info('Could not find the IP address for the filterwheel. Rebooting.')
-        powerControl.turnOff(config['FilterWheelControlPowerPort'])
-        sleep(5)
-        powerControl.turnOn(config['FilterWheelControlPowerPort'])
-        sleep(60)
+    if filterwheel_config['port_location'] != None:
+#        filterwheel_serial = False
         filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
         if filterwheel_IP is not None:
-            filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
+            filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080/'
             filterwheel_serial = False
             logging.info('Found FilterWheel at %s' % filterwheel_IP)
         else:
-            logging.info('Still cannot find IP address fo the filterwheel. Waiting...')
-            wait_count = 0
-            found = False
-            while wait_count < 5 and found == False:
-                wait_count = wait_count+1
-                sleep(15)
-                filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
-                if filterwheel_IP is not None:
-                    filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
-                    filterwheel_serial = False
-                    found = True
-                    logging.info('Found Filterwheel at %s' % filterwheel_IP)
-                else:
-                    filterwheel_serial = True
+            logging.info('Could not find the IP address for the filterwheel. Rebooting.')
+            powerControl.turnOff(config['FilterWheelControlPowerPort'])
+            sleep(5)
+            powerControl.turnOn(config['FilterWheelControlPowerPort'])
+            sleep(60)
+            filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
+            if filterwheel_IP is not None:
+                filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
+                filterwheel_serial = False
+                logging.info('Found FilterWheel at %s' % filterwheel_IP)
+            else:
+                logging.info('Still cannot find IP address fo the filterwheel. Waiting...')
+                wait_count = 0
+                found = False
+                while wait_count < 5 and found == False:
+                    wait_count = wait_count+1
+                    sleep(15)
+                    filterwheel_IP = get_IP_from_MAC(filterwheel_config['MAC_address'])
+                    if filterwheel_IP is not None:
+                        filterwheel_config['ip_address'] = 'http://' + filterwheel_IP + ':8080'
+                        filterwheel_serial = False
+                        found = True
+                        logging.info('Found Filterwheel at %s' % filterwheel_IP)
+                    else:
+                        filterwheel_serial = True
+    else:
+        logging.info('No filterwheel in use')
 
     logging.info('Waiting until Housekeeping time: ' +
                 str(timeHelper.getHousekeeping()))
@@ -103,7 +124,7 @@ try:
     lasershutter = HIDLaserShutter(config['vendorId'], config['productId'])
     skyscanner = SkyScanner(skyscan_config['max_steps'], skyscan_config['azi_offset'], skyscan_config['zeni_offset'], skyscan_config['azi_world'], skyscan_config['zeni_world'], skyscan_config['number_of_steps'], skyscan_config['port_location'])
     camera = getCamera("Andor")
-    if filterwheel_serial:
+    if (filterwheel_serial) & (filterwheel_config['port_location'] != None):
         # Use the serial port
         logging.info('Opening Filterwheel serial port')
         fw = FilterWheel(port=filterwheel_config['port_location'])
@@ -118,7 +139,7 @@ try:
         fw.go(filterwheel_config['park_position'])
         camera.turnOffCooler()
         camera.shutDown()
-        powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
+        powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'], legacy_controller=config['powerSwitchLegacy'])
         powerControl.turnOff(config['AndorPowerPort'])
         powerControl.turnOff(config['SkyScannerPowerPort'])
         powerControl.turnOff(config['LaserPowerPort'])
@@ -158,6 +179,21 @@ try:
     if datetime.now() < (sunset + timedelta(minutes=10)):
         bias_image = imageTaker.take_bias_image(config["bias_expose"], 0, 0)
         dark_image = imageTaker.take_dark_image(config["dark_expose"], 0, 0)
+
+        # Move sky scanner and filterwheel
+        logging.info('Moving SkyScanner to laser position: %.2f, %.2f' % (
+            config['azi_laser'], config['zen_laser']))
+        skyscanner.set_pos_real(config['azi_laser'], config['zen_laser'])
+        world_az, world_zeni = skyscanner.get_world_coords()
+        logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
+
+        # Move the filterwheel
+        if isinstance(filterwheel_config['laser_position'], int):
+            logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
+            fw.go(filterwheel_config['laser_position'])
+            logging.info("Moved FilterWheel")
+
+        logging.info('Taking laser image')
         laser_image = imageTaker.take_laser_image(
             config["laser_expose"], skyscanner, lasershutter, config["azi_laser"], config["zen_laser"], fw, filterwheel_config["laser_position"])
         if config['laser_timedelta'] is not None:
@@ -176,11 +212,12 @@ try:
                 break
             
             currThresholdMoonAngle = skyscanner.get_moon_angle(config['latitude'], config['longitude'], observation['skyScannerLocation'][0], observation['skyScannerLocation'][1])
-            logging.info('The current Moon angle Threshold is: %.2f' % currThresholdMoonAngle)
+            logging.debug('The current moon angle is: %.2f' % currThresholdMoonAngle)
             if (currThresholdMoonAngle <= config['moonThresholdAngle']):
-                logging.info('The moonThreshold angle was too small. The current threshold moon angle is:  %.2f' % currThresholdMoonAngle + 
-                ' the current direction of telescope is az: %.2f ze: %.2f' % (
-                    observation['skyScannerLocation'][0], observation['skyScannerLocation'][1]))   
+                logging.info('The current moon angle is %.2f < the threshold angle of %.2f so skipping this observation (ze: %.2f, az: %.2f, filter: %d)' % (currThresholdMoonAngle, config['moonThresholdAngle'], observation['skyScannerLocation'][0], observation['skyScannerLocation'][1], observation['filterPosition']))
+#                logging.info('The moonThreshold angle was too small. The current threshold moon angle is:  %.2f' % currThresholdMoonAngle + 
+#                ' the current direction of telescope is az: %.2f ze: %.2f' % (
+#                    observation['skyScannerLocation'][0], observation['skyScannerLocation'][1]))   
                 continue
 
             logging.info('Moving SkyScanner to: %.2f, %.2f' % (
@@ -188,7 +225,7 @@ try:
             skyscanner.set_pos_real(
                 observation["skyScannerLocation"][0], observation['skyScannerLocation'][1])
             world_az, world_zeni = skyscanner.get_world_coords()
-            logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %2f" %(world_az, world_zeni))
+            logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
             # Move the filterwheel
             logging.info('Moving FilterWheel to: %d' % (observation['filterPosition']))
@@ -203,8 +240,7 @@ try:
                 observation['exposureTime'] = min(0.5*observation['lastExpTime']*(1 + observation['desiredIntensity']/observation['lastIntensity']),
                                                 config['maxExposureTime'])
 
-            logging.info('Calculated exposure time: ' +
-                        str(observation['exposureTime']))
+            logging.info('Calculated exposure time: {:.1f}'.format(observation['exposureTime']))
 
             # Take image
             new_image = imageTaker.take_normal_image(observation['imageTag'],
@@ -220,15 +256,27 @@ try:
             observation['lastIntensity'] = image_intensity
             observation['lastExpTime'] = observation['exposureTime']
 
-            logging.info('Image intensity: ' + str(image_intensity))
+            logging.info('Image intensity: {:.2f}'.format(image_intensity))
 
             # Check if we should take a laser image
             logging.info('Time since last laser ' +  str(datetime.now() - config['laser_lasttime']))
             take_laser = (datetime.now() - config['laser_lasttime']) > config['laser_timedelta']
             logging.info('Take_laser is ' + str(take_laser))
             if take_laser:
+#                world_az, world_zeni = skyscanner.get_world_coords()
+#                logging.info("The Sky Scanner is pointed at laser position of azi: %.2f and zeni %.2f" %(world_az, world_zeni))
+                logging.info('Moving SkyScanner to laser position: %.2f, %.2f' % (
+                    config['azi_laser'], config['zen_laser']))
+                skyscanner.set_pos_real(config['azi_laser'], config['zen_laser'])
                 world_az, world_zeni = skyscanner.get_world_coords()
-                logging.info("The Sky Scanner is pointed at laser position of azi: %.2f and zeni %.2f" %(world_az, world_zeni))
+                logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
+
+                # Move the filterwheel
+                if isinstance(filterwheel_config['laser_position'], int):
+                    logging.info('Moving FilterWheel to laser position: %d' % (filterwheel_config['laser_position']))
+                    fw.go(filterwheel_config['laser_position'])
+                    logging.info("Moved FilterWheel")
+
                 logging.info('Taking laser image')
                 laser_image = imageTaker.take_laser_image(
                     config["laser_expose"], skyscanner, lasershutter, config["azi_laser"], config["zen_laser"], fw, filterwheel_config["laser_position"])
@@ -246,27 +294,27 @@ try:
     logging.info('Shutting down CCD')
     camera.shutDown()
 
-    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
+    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=config['powerSwitchLegacy'])
     powerControl.turnOff(config['AndorPowerPort'])
     powerControl.turnOff(config['SkyScannerPowerPort'])
     powerControl.turnOff(config['LaserPowerPort'])
     powerControl.turnOff(config['FilterWheelPowerPort'])
 
-    logging.info('Executed flawlessly, exitting')
+    logging.info('Executed flawlessly, exiting')
 
 except Exception as e:
     logging.error(e)
 
     logging.error('Turning off components')
-    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
+    powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'],legacy_controller=config['powerSwitchLegacy'])
     powerControl.turnOff(config['AndorPowerPort'])
     powerControl.turnOff(config['SkyScannerPowerPort'])
     powerControl.turnOff(config['LaserPowerPort'])
     powerControl.turnOff(config['FilterWheelPowerPort'])
 
-    sm = SendMail(config['email'], config['pickleCred'], config['gmailCred'], config['site'])
-    
-    print("sending mail")
-    sm.send_error(config['receiverEmails'], e)
+#    sm = SendMail(config['email'], config['pickleCred'], config['gmailCred'], config['site'])
+#    
+#    print("sending mail")
+#    sm.send_error(config['receiverEmails'], e)
 
     

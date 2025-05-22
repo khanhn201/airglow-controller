@@ -19,10 +19,16 @@ from utilities.send_mail import SendMail
 from components.camera import getCamera
 from components.shutterhid import HIDLaserShutter
 #from components.sky_scanner import SkyScanner
-from components.sky_scanner_keo import SkyScanner
+#from components.sky_scanner_keo import SkyScanner
 from components.skyalert import SkyAlert
 from components.powercontrol import PowerControl
 from components.filterwheel import FilterWheel
+
+if skyscan_config['type'] == 'KEO':
+    from components.sky_scanner_keo import SkyScanner
+else:
+    from components.sky_scanner import SkyScanner
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -46,7 +52,11 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 #	Sun
 #	Sequence
 # 	gmail
-what_to_test = ['FilterWheel']
+
+#what_to_test = ['LaserShutter']
+#what_to_test = ['SkyAlert']
+what_to_test = ['Sequence']
+#what_to_test = ['SkyScanner']
 
 powerControl = PowerControl(config['powerSwitchAddress'], config['powerSwitchUser'], config['powerSwitchPassword'])
 
@@ -76,7 +86,12 @@ if 'LaserShutter' in what_to_test:
     sleep(5)
     lasershutter.close_shutter()
     sleep(5)
+    lasershutter.open_shutter()
+    sleep(5)
+    lasershutter.close_shutter()
     logging.info('Finished testing LaserShutter')
+
+
 
 if 'FilterWheel' in what_to_test:
     powerControl.turnOn(config['FilterWheelPowerPort'])
@@ -85,12 +100,14 @@ if 'FilterWheel' in what_to_test:
 ##    fw = FilterWheel(filterwheel_config['port_location'])
     logging.info('Homing Filterwheel')
     fw.home()
-    logging.info('Going to positiion 4')
-    fw.go(2)
     logging.info('Going to positiion 2')
+    fw.go(2)
+    logging.info('Going to positiion 1')
     fw.go(1)
     logging.info('Going to positiion 0')
     fw.go(0)
+    logging.info('Going to positiion 3')
+    fw.go(3)
     logging.info('Turning off FilterWheel')
     powerControl.turnOff(config['FilterWheelPowerPort'])
 
@@ -121,6 +138,7 @@ if 'Sequence' in what_to_test:
     fw = FilterWheel(ip_address=filterwheel_config['ip_address'])
 #    fw = FilterWheel(filterwheel_config['port_location'])
     skyscanner = SkyScanner(skyscan_config['max_steps'], skyscan_config['azi_offset'], skyscan_config['zeni_offset'], skyscan_config['azi_world'], skyscan_config['zeni_world'], skyscan_config['number_of_steps'], skyscan_config['port_location'])
+    fw.home()
 
     logging.info('Sending SkyScanner home')
     skyscanner.go_home()
@@ -130,7 +148,7 @@ if 'Sequence' in what_to_test:
         logging.info('Moving SkyScanner to: %.2f, %.2f' % (observation['skyScannerLocation'][0], observation['skyScannerLocation'][1]))
         skyscanner.set_pos_real(observation["skyScannerLocation"][0], observation['skyScannerLocation'][1])
         world_az, world_zeni = skyscanner.get_world_coords()
-        logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %2f" %(world_az, world_zeni))
+        logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
         # Move the filterwheel
         logging.info('Moving FilterWheel to: %d' % (observation['filterPosition']))
@@ -140,7 +158,7 @@ if 'Sequence' in what_to_test:
     logging.info('Moving to laser position')
     skyscanner.set_pos_real(config['azi_laser'],config['zen_laser'])
     world_az, world_zeni = skyscanner.get_world_coords()
-    logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %2f" %(world_az, world_zeni))
+    logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
     # Move the filterwheel
     logging.info('Moving FilterWheel to: %d' % (observation['filterPosition']))
@@ -170,9 +188,9 @@ if 'Sun' in what_to_test:
     sunZe = (np.pi/2 - sun.alt.real)*180./np.pi
 
     skyscanner.set_pos_real(sunAz, sunZe)
-    logging.info("The Sky Scanner will be moved to azi: %.2f, and zeni: %2f" %(sunAz, sunZe))
+    logging.info("The Sky Scanner will be moved to azi: %.2f, and zeni: %.2f" %(sunAz, sunZe))
     world_az, world_zeni = skyscanner.get_world_coords()
-    logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %2f" %(world_az, world_zeni))
+    logging.info("The Sky Scanner has moved to azi: %.2f, and zeni: %.2f" %(world_az, world_zeni))
 
     logging.info('Turning off SkyScanner power')
     powerControl.turnOff(config['SkyScannerPowerPort'])

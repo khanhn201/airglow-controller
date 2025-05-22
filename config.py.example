@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 
 config = {
     'site': 'LOW',
@@ -19,6 +20,7 @@ config = {
     'zen_laser': -180.0,
     'data_dir': '/home/airglow/airglow/data/',
     'log_dir': '/home/airglow/airglow/logfiles/',
+    'log_type': logging.INFO,
     'laser_timedelta': timedelta(minutes=15),
     'laser_lasttime': None,
     'maxExposureTime': 600,
@@ -33,6 +35,7 @@ config = {
     'powerSwitchAddress': '192.168.1.100',
     'powerSwitchUser': 'admin',
     'powerSwitchPassword': 'ionosphere',
+    'powerSwitchLegacy': False,
 
     # scipy.signal.convolve2d
     'i1': 150,
@@ -57,7 +60,7 @@ config = {
     'vendorId': 0x0461,
     'productId': 0x0030,
 
-    # Gmaii
+    # Gmail
     'pickleCred': "/home/airglow/airglow/airglow-controller/token.pickle",
     'gmailCred': "/home/airglow/airglow/airglow-controller/gmailcredential.json",
     'email': "airglowuaotest@gmail.com",
@@ -78,7 +81,8 @@ skyscan_config = {
     'azi_world': 45,
     'zeni_world': 45,
     'number_of_steps': 50,
-    'port_location': '/dev/ttyUSB1'
+    'port_location': '/dev/ttyUSB0',
+    'type': 'KEO'
 }
 
 filterwheel_config = {

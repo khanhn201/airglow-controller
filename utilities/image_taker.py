@@ -20,7 +20,11 @@ class Image_Helper:
             "XR": 0,
             "D": 0,
             "L": 0,
-            "B": 0
+            "B": 0,
+            "X0": 0,
+            "X1": 0,
+            "X2": 0,
+            "X3": 0
         }
         self.folderName = folderName
         self.camera = camera
@@ -108,10 +112,10 @@ class Image_Helper:
 
     # function for laser image
 
-    def take_laser_image(self, exposure, skyscanner, lasershutter, az, zen, fw, fw_laser):
-        skyscanner.set_pos_real(az, zen)
+    def take_laser_image(self, exposure, skyscanner, lasershutter, az, ze, fw, fw_laser):
+#        skyscanner.set_pos_real(az, ze)
         # move filterwheel
-        fw.go(fw_laser)
+#        fw.go(fw_laser)
         lasershutter.open_shutter()
         self.camera.setShutter()
         self.camera.setExposureTime(exposure)
