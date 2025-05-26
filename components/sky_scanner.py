@@ -318,7 +318,7 @@ class SkyScanner():
 
     def get_curr_coords(self):
         '''Gets target position of SmartMotor'''
-        self.ser.write('RPA '.encode())
+        self.ser.write('RPA'.encode())
         process_az = self.ser.readline().decode()
         #print('\nget_curr_coords process_az ', process_az)
         split_by_command_numbers = process_az.split(' ')
