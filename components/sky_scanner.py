@@ -320,10 +320,10 @@ class SkyScanner():
         '''Gets target position of SmartMotor'''
         self.ser.write('RPA'.encode())
         process_az = self.ser.readline().decode()
-        #print('\nget_curr_coords process_az ', process_az)
+        print('\nget_curr_coords process_az ', process_az)
         split_by_command_numbers = process_az.split(' ')
         split_by_hash = split_by_command_numbers[1].split('\r')
-        #print('get_curr_coords split_by_hash (az, az) ', split_by_hash)
+        print('get_curr_coords split_by_hash (az, az) ', split_by_hash)
         ze = int(split_by_hash[0])
         az = int(split_by_hash[1])
         return az, ze
